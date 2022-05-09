@@ -1,0 +1,134 @@
+import time
+import pandas as pd
+
+CITY_DATA = {'chicago': 'chicago.csv',
+             'new york city': 'new_york_city.csv',
+             'washington': 'washington.csv'}
+
+
+def get_filters():
+    print('Hello! Let\'s explore some US bikeshare data!')
+    city = input("Please choose a city: chicago, new york city, or washington ? ").lower()
+    while city not in CITY_DATA:
+        print("Please enter a valid city")
+        city = input("Please choose a city: chicago, new york, or washington ? ").lower()
+
+    months = ['1', '2', '3', '4', '5', '6', 'All']
+    month = input('Please chooes a month from 1 to 6 or use "All" ')
+    while month not in months:
+        print('Please Enter a valid month')
+        month = input('Please chooes a month from 1 to 6 or use "All" ')
+
+    days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'All']
+    day = input('Please enter the day by letters ').title()
+    while day not in days:
+        print('Please enter a valid day')
+        day = input('Please enter the day by letters ').title()
+
+    print('-' * 100)
+    # Returning the city, month and day selections
+    return city, month, day
+
+
+def load_data(city, month, day):
+    print('\nLoading Data...')
+    df = pd.read_csv(CITY_DATA[city])
+
+    df['Start Time'] = pd.to_datetime(df['Start Time'])
+    df['End Time'] = pd.to_datetime(df['End Time'])
+    df['month'] = df['Start Time'].dt.month
+    df['day'] = df['Start Time'].dt.day_name()
+
+    if month != 'All':
+        df = df[df['month'] == int(month)]
+    if day != 'All':
+        df = df[df['day'] == day.title()]
+    return df
+
+
+def time_stats(df):
+    print('\nCalculating The Most Frequent Times of Travel...\n')
+    start_time = time.time()
+    print('The most commom month: ' + str(df['month'].mode()[0]))
+    print('The most commom day of week: ' + str(df['day'].mode()[0]))
+
+    df['Hour'] = df['Start Time'].dt.hour
+    print('The most commom hour: ' + str(df['Hour'].mode()[0]))
+
+    print(f"\nThis took {(time.time() - start_time)} seconds.")
+    print('-' * 100)
+
+
+def station_stats(df):
+    print('\nCalculating The Most Popular Stations and Trip...\n')
+    start_time = time.time()
+    print('The most commom start station: ' + str(df['Start Station'].mode()[0]))
+    print('The most commom end station: ' + str(df['End Station'].mode()[0]))
+
+    df['Trip'] = df['Start Station'] + " => " + df['End Station']
+    print('The most commom combination: ' + str(df['Trip'].mode()[0]))
+
+    print(f"\nThis took {(time.time() - start_time)} seconds.")
+    print('-' * 100)
+
+
+def trip_duration_stats(df):
+    print('\nCalculating Trip Duration...\n')
+    start_time = time.time()
+    print('The total travel time: ' + str(df['Trip Duration'].sum()))
+    print('The total travel time: ' + str(df['Trip Duration'].mean()))
+
+    print(f"\nThis took {(time.time() - start_time)} seconds.")
+    print('-' * 100)
+
+
+def user_stats(df):
+    print('\nCalculating User Stats...\n')
+    start_time = time.time()
+
+    cusers = df['User Type'].value_counts()
+    print(cusers)
+
+    if 'Gender' in df.columns:
+        gender_counts = df['Gender'].value_counts()
+        print(gender_counts)
+    else:
+        print('Data is not available for chosen city')
+
+    if 'Birth Year' in df.columns:
+        print('The earliest year: ' + str(df['Birth Year'].min()))
+        print('The most recent year: ' + str(df['Birth Year'].max()))
+        print('The most common year: ' + str(df['Birth Year'].mode()[0]))
+    else:
+        print('Data is not available for chosen city')
+
+    print("\nThis took %s seconds." % (time.time() - start_time))
+    print('-' * 100)
+
+
+def main():
+    while True:
+        city, month, day = get_filters()
+        df = load_data(city, month, day)
+
+        time_stats(df)
+        station_stats(df)
+        trip_duration_stats(df)
+        user_stats(df)
+
+        view_data = input("Would you like to view 5 rows of individual trip data? Enter yes or no?").lower()
+        start_loc = 0
+        while view_data == 'yes':
+            print(df.iloc[start_loc:start_loc + 5])
+
+            view_data = input(
+                "Would you like to view the next 5 rows of individual trip data? Enter yes or no?").lower()
+            start_loc += 5
+
+        restart = input('\nWould you like to restart? Enter yes or no.\n')
+        if restart.lower() != 'yes':
+            break
+
+
+if __name__ == "__main__":
+    main()
